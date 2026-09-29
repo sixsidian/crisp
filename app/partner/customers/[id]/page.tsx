@@ -1,5 +1,8 @@
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { GenerateReportButton } from "./generate-report-button";
+import { SubmissionDataView } from "@/components/submission-data-view";
+import { ReportView, type Report } from "@/components/report-view";
 
 export default async function CustomerDetailPage({
   params,
@@ -39,23 +42,26 @@ export default async function CustomerDetailPage({
             <span className="rounded-full border border-border px-2 py-0.5 text-xs uppercase tracking-wide text-muted">
               {submission.status}
             </span>
-            {submission.status !== "complete" && (
-              <GenerateReportButton submissionId={submission.id} />
-            )}
+            <div className="flex items-center gap-3">
+              {submission.status !== "complete" && (
+                <Link
+                  href={`/partner/customers/${id}/submissions/${submission.id}/edit`}
+                  className="text-sm text-muted underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  Edit
+                </Link>
+              )}
+              {submission.status !== "complete" && (
+                <GenerateReportButton submissionId={submission.id} />
+              )}
+            </div>
           </div>
 
-          <pre className="mb-3 overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs text-muted">
-            {JSON.stringify(submission.data, null, 2)}
-          </pre>
+          <SubmissionDataView data={(submission.data as Record<string, unknown>) ?? {}} />
 
           {submission.reports?.map((report) => (
-            <div key={report.id} className="border-t border-border pt-3">
-              <p className="font-medium text-foreground">
-                Readiness score: {report.readiness_score}/100
-              </p>
-              <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs text-muted">
-                {JSON.stringify(report.report, null, 2)}
-              </pre>
+            <div key={report.id} className="mt-4 border-t border-border pt-4">
+              <ReportView report={report.report as unknown as Report} />
             </div>
           ))}
         </div>
