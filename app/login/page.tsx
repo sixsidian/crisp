@@ -31,7 +31,9 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
       <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-8">
-        <h1 className="font-display text-2xl text-foreground">crisp</h1>
+        <h1 className="font-display text-xl text-foreground">
+          Cyber Resilience Intelligence &amp; Scoring Platform
+        </h1>
         <p className="mt-1 text-sm text-muted">Sign in to your partner account.</p>
         <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-3">
           <input

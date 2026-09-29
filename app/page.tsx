@@ -6,8 +6,8 @@ export default function Home() {
       <p className="mb-3 text-sm uppercase tracking-[0.2em] text-accent">
         Commvault partner tool
       </p>
-      <h1 className="font-display text-5xl text-foreground sm:text-6xl">
-        crisp
+      <h1 className="font-display text-4xl text-foreground sm:text-5xl">
+        Cyber Resilience Intelligence &amp; Scoring Platform
       </h1>
       <p className="mt-4 max-w-md text-muted">
         Together, we turn customer conversations into Cyber Resilience
