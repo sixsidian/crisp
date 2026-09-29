@@ -315,3 +315,27 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
 export function getAllFieldNames(): string[] {
   return ASSESSMENT_SECTIONS.flatMap((section) => section.fields.map((field) => field.name));
 }
+
+export function getRequiredFieldNames(): string[] {
+  return ASSESSMENT_SECTIONS.flatMap((section) =>
+    section.fields.filter((field) => field.required).map((field) => field.name)
+  );
+}
+
+// Reads all field values back out of a submitted FormData, matching
+// the shape each field type needs (checkbox-group -> string[]). Pure
+// function, safe to import from server actions/components.
+export function readAssessmentData(formData: FormData): Record<string, unknown> {
+  const data: Record<string, unknown> = {};
+  for (const section of ASSESSMENT_SECTIONS) {
+    for (const field of section.fields) {
+      if (field.type === "checkbox-group") {
+        data[field.name] = formData.getAll(field.name);
+      } else {
+        const value = formData.get(field.name);
+        if (value !== null) data[field.name] = value;
+      }
+    }
+  }
+  return data;
+}

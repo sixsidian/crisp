@@ -1,6 +1,8 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AssessmentFormFields, readAssessmentData } from "@/components/assessment-form-fields";
+import { readAssessmentData } from "@/lib/assessment-questions";
+import { AssessmentForm } from "@/components/assessment-form";
+import { AssessmentPageHeader } from "@/components/assessment-page-header";
 
 async function updateSubmission(
   customerId: string,
@@ -37,7 +39,7 @@ export default async function EditSubmissionPage({
 
   const { data: submission } = await supabase
     .from("submissions")
-    .select("id, data, status, customers(company_name)")
+    .select("id, data, status, customers(company_name), reports(readiness_score)")
     .eq("id", submissionId)
     .single();
 
@@ -50,23 +52,22 @@ export default async function EditSubmissionPage({
   }
 
   const companyName = submission.customers?.[0]?.company_name;
+  const readinessScore = submission.reports?.[0]?.readiness_score ?? null;
 
   const boundUpdate = updateSubmission.bind(null, customerId, submissionId);
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
-      <h1 className="mb-1 font-display text-2xl text-foreground">Edit assessment</h1>
-      {companyName && <p className="mb-6 text-sm text-muted">{companyName}</p>}
-      <form action={boundUpdate} className="flex flex-col gap-4">
-        <AssessmentFormFields existingData={submission.data as Record<string, unknown>} />
-
-        <button
-          type="submit"
-          className="mt-2 rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
-        >
-          Save changes
-        </button>
-      </form>
+    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <AssessmentPageHeader
+        title="Edit assessment"
+        companyName={companyName}
+        readinessScore={readinessScore}
+      />
+      <AssessmentForm
+        action={boundUpdate}
+        existingData={submission.data as Record<string, unknown>}
+        submitLabel="Save changes"
+      />
     </main>
   );
 }
