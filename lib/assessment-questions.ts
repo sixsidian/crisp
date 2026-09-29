@@ -38,6 +38,15 @@ export interface AssessmentField {
   options?: string[];
   helpText?: string;
   required?: boolean;
+  // When set, this field is only shown if the named field's current
+  // answer is NOT one of hideWhen's values - e.g. "are crown-jewel
+  // systems tiered onto faster storage" doesn't make sense if the
+  // previous answer was "no minimum viable company is defined".
+  dependsOn?: { field: string; hideWhen: string[] };
+  // Adds an optional free-text "add detail" box beneath the field, for
+  // questions where a partner's extra context materially helps the
+  // assessment (e.g. what the crown-jewel systems actually are).
+  allowNotes?: boolean;
 }
 
 export interface AssessmentSection {
@@ -87,6 +96,7 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         type: "radio",
         options: ["Yes, documented", "Informally, not documented", "No", "Unsure"],
         required: true,
+        allowNotes: true,
       },
       {
         name: "mvc_storage_tiering",
@@ -97,6 +107,8 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         required: true,
         helpText:
           "RTO for a given system is largely a function of the storage it's recovered onto. Tiering by criticality lets crown-jewel systems recover fast without paying premium-storage cost for everything.",
+        dependsOn: { field: "minimum_viable_company_defined", hideWhen: ["No"] },
+        allowNotes: true,
       },
     ],
   },
@@ -151,6 +163,7 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         type: "select",
         options: ["Within last 6 months", "6-12 months ago", "Over a year ago", "Never tested", "No DR plan"],
         required: true,
+        dependsOn: { field: "dr_plan_documented", hideWhen: ["No"] },
       },
       {
         name: "rto_defined",
@@ -246,6 +259,7 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         type: "radio",
         options: ["Yes", "No", "No plan to test", "Unsure"],
         required: true,
+        dependsOn: { field: "incident_response_plan", hideWhen: ["No"] },
       },
     ],
   },
@@ -262,6 +276,7 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         type: "radio",
         options: ["Yes", "No", "Unsure"],
         required: true,
+        dependsOn: { field: "incident_response_plan", hideWhen: ["No"] },
       },
       {
         name: "dr_runbook_offline_copy",
@@ -269,6 +284,7 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         type: "radio",
         options: ["Yes", "No", "Unsure"],
         required: true,
+        dependsOn: { field: "dr_plan_documented", hideWhen: ["No"] },
       },
       {
         name: "out_of_band_communication",
@@ -322,9 +338,35 @@ export function getRequiredFieldNames(): string[] {
   );
 }
 
+// Sequential reference numbers (1, 2, 3...) for every question, in
+// schema order, so a question can be referenced unambiguously (e.g.
+// "Q14") regardless of which step it's currently shown in.
+export function getQuestionNumbers(): Record<string, number> {
+  const numbers: Record<string, number> = {};
+  let n = 1;
+  for (const section of ASSESSMENT_SECTIONS) {
+    for (const field of section.fields) {
+      numbers[field.name] = n++;
+    }
+  }
+  return numbers;
+}
+
+// Whether a field should currently be shown, based on another field's
+// answer (dependsOn). A field with no dependsOn is always visible.
+export function isFieldVisible(field: AssessmentField, values: Record<string, string | string[]>): boolean {
+  if (!field.dependsOn) return true;
+  const currentValue = values[field.dependsOn.field];
+  if (Array.isArray(currentValue)) {
+    return !field.dependsOn.hideWhen.some((v) => currentValue.includes(v));
+  }
+  return !field.dependsOn.hideWhen.includes(currentValue ?? "");
+}
+
 // Reads all field values back out of a submitted FormData, matching
-// the shape each field type needs (checkbox-group -> string[]). Pure
-// function, safe to import from server actions/components.
+// the shape each field type needs (checkbox-group -> string[]), plus
+// any optional per-field notes (name + "__note"). Pure function, safe
+// to import from server actions/components.
 export function readAssessmentData(formData: FormData): Record<string, unknown> {
   const data: Record<string, unknown> = {};
   for (const section of ASSESSMENT_SECTIONS) {
@@ -334,6 +376,10 @@ export function readAssessmentData(formData: FormData): Record<string, unknown> 
       } else {
         const value = formData.get(field.name);
         if (value !== null) data[field.name] = value;
+      }
+      if (field.allowNotes) {
+        const note = formData.get(`${field.name}__note`);
+        if (note) data[`${field.name}__note`] = note;
       }
     }
   }

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ASSESSMENT_SECTIONS, AssessmentField } from "@/lib/assessment-questions";
+import { useMemo, useState } from "react";
+import { ASSESSMENT_SECTIONS, AssessmentField, getQuestionNumbers, isFieldVisible } from "@/lib/assessment-questions";
 
 const fieldClass =
   "rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-accent focus:outline-none";
@@ -59,18 +59,23 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
 
   const [activeIndex, setActiveIndex] = useState(0);
   const activeStep = steps[activeIndex];
+  const questionNumbers = useMemo(() => getQuestionNumbers(), []);
 
   function setValue(name: string, value: string | string[]) {
     setValues((prev) => ({ ...prev, [name]: value }));
   }
 
+  function visibleFields(step: Step) {
+    return step.fields.filter((f) => isFieldVisible(f, values));
+  }
+
   function stepProgress(step: Step) {
-    const required = step.fields.filter((f) => f.required);
+    const required = visibleFields(step).filter((f) => f.required);
     if (!required.length) return { answered: 0, total: 0 };
     return { answered: required.filter((f) => isAnswered(values[f.name])).length, total: required.length };
   }
 
-  const allRequired = steps.flatMap((s) => s.fields.filter((f) => f.required));
+  const allRequired = steps.flatMap((s) => visibleFields(s).filter((f) => f.required));
   const overallAnswered = allRequired.filter((f) => isAnswered(values[f.name])).length;
   const overallProgress = allRequired.length ? Math.round((overallAnswered / allRequired.length) * 100) : 100;
 
@@ -113,24 +118,45 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
           <h2 className="font-display text-lg text-foreground">{activeStep.title}</h2>
           {activeStep.description && <p className="mt-1 text-xs text-muted">{activeStep.description}</p>}
           <div className="mt-4 flex flex-col gap-4">
-            {activeStep.fields.map((field) => (
-              <Field key={field.name} field={field} value={values[field.name]} onChange={setValue} />
+            {visibleFields(activeStep).map((field) => (
+              <Field
+                key={field.name}
+                field={field}
+                number={questionNumbers[field.name]}
+                value={values[field.name]}
+                noteValue={values[`${field.name}__note`]}
+                onChange={setValue}
+              />
             ))}
           </div>
         </div>
 
         {/* Carry every other step's answers as hidden inputs so a single
-            submit captures the whole form, not just the visible step. */}
+            submit captures the whole form, not just the visible step.
+            Fields hidden by dependsOn are skipped entirely, so an
+            inapplicable answer never gets submitted. */}
         {steps
           .filter((_, index) => index !== activeIndex)
-          .flatMap((step) => step.fields)
-          .map((field) => {
+          .flatMap((step) => visibleFields(step))
+          .flatMap((field) => {
+            const inputs: { key: string; name: string; value: string }[] = [];
             const value = values[field.name];
             if (Array.isArray(value)) {
-              return value.map((v) => <input key={`${field.name}-${v}`} type="hidden" name={field.name} value={v} />);
+              value.forEach((v) => inputs.push({ key: `${field.name}-${v}`, name: field.name, value: v }));
+            } else {
+              inputs.push({ key: field.name, name: field.name, value: value ?? "" });
             }
-            return <input key={field.name} type="hidden" name={field.name} value={value ?? ""} />;
-          })}
+            if (field.allowNotes) {
+              const note = values[`${field.name}__note`];
+              inputs.push({
+                key: `${field.name}__note`,
+                name: `${field.name}__note`,
+                value: typeof note === "string" ? note : "",
+              });
+            }
+            return inputs;
+          })
+          .map((input) => <input key={input.key} type="hidden" name={input.name} value={input.value} />)}
 
         <div className="mt-6 flex items-center justify-between">
           <button
@@ -167,18 +193,38 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
 
 function Field({
   field,
+  number,
   value,
+  noteValue,
   onChange,
 }: {
   field: AssessmentField;
+  number?: number;
   value: string | string[] | undefined;
+  noteValue?: string | string[];
   onChange: (name: string, value: string | string[]) => void;
 }) {
+  const labelText = number ? `${number}. ${field.label}` : field.label;
+  const notesBox = field.allowNotes && (
+    <label className="flex flex-col gap-1 text-xs text-muted">
+      Add detail (optional)
+      <textarea
+        name={`${field.name}__note`}
+        value={typeof noteValue === "string" ? noteValue : ""}
+        onChange={(e) => onChange(`${field.name}__note`, e.target.value)}
+        rows={2}
+        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-accent focus:outline-none"
+      />
+    </label>
+  );
+
+  let control: React.ReactNode;
+
   switch (field.type) {
     case "select":
-      return (
+      control = (
         <label className="flex flex-col gap-1 text-sm text-muted">
-          {field.label}
+          {labelText}
           <select
             name={field.name}
             required={field.required}
@@ -197,11 +243,12 @@ function Field({
           </select>
         </label>
       );
+      break;
 
     case "radio":
-      return (
+      control = (
         <fieldset className="flex flex-col gap-2 text-sm text-muted">
-          <legend>{field.label}</legend>
+          <legend>{labelText}</legend>
           <div className="flex flex-wrap gap-3">
             {field.options?.map((option) => (
               <label
@@ -223,12 +270,13 @@ function Field({
           {field.helpText && <span className="text-xs text-muted">{field.helpText}</span>}
         </fieldset>
       );
+      break;
 
     case "checkbox-group": {
       const selected = Array.isArray(value) ? value : [];
-      return (
+      control = (
         <fieldset className="flex flex-col gap-2 text-sm text-muted">
-          <legend>{field.label}</legend>
+          <legend>{labelText}</legend>
           <div className="flex flex-wrap gap-3">
             {field.options?.map((option) => (
               <label
@@ -253,12 +301,13 @@ function Field({
           </div>
         </fieldset>
       );
+      break;
     }
 
     case "textarea":
-      return (
+      control = (
         <label className="flex flex-col gap-1 text-sm text-muted">
-          {field.label}
+          {labelText}
           <textarea
             name={field.name}
             required={field.required}
@@ -270,12 +319,13 @@ function Field({
           {field.helpText && <span className="text-xs text-muted">{field.helpText}</span>}
         </label>
       );
+      break;
 
     case "text":
     default:
-      return (
+      control = (
         <label className="flex flex-col gap-1 text-sm text-muted">
-          {field.label}
+          {labelText}
           <input
             type="text"
             name={field.name}
@@ -287,5 +337,13 @@ function Field({
           {field.helpText && <span className="text-xs text-muted">{field.helpText}</span>}
         </label>
       );
+      break;
   }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {control}
+      {notesBox}
+    </div>
+  );
 }
