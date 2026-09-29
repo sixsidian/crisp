@@ -1,12 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ASSESSMENT_SECTIONS, AssessmentField, getRequiredFieldNames } from "@/lib/assessment-questions";
+import { useState } from "react";
+import { ASSESSMENT_SECTIONS, AssessmentField } from "@/lib/assessment-questions";
 
 const fieldClass =
   "rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-accent focus:outline-none";
 
 type Values = Record<string, string | string[]>;
+
+interface Step {
+  id: string;
+  title: string;
+  description?: string;
+  fields: AssessmentField[];
+}
 
 function isAnswered(value: string | string[] | undefined): boolean {
   if (Array.isArray(value)) return value.length > 0;
@@ -17,18 +24,28 @@ interface AssessmentFormProps {
   action: (formData: FormData) => void;
   existingData?: Record<string, unknown>;
   submitLabel: string;
-  // When set, renders an extra "Company" card as the first section with
-  // a plain text input for the customer's company name (used only on
-  // the "new customer" flow - company_name lives on the customers
-  // table, not in submission data).
+  // When set, adds a "Company" step with a plain text input for the
+  // customer's company name (used only on the "new customer" flow -
+  // company_name lives on the customers table, not in submission data).
   companyNameField?: boolean;
 }
 
 export function AssessmentForm({ action, existingData, submitLabel, companyNameField }: AssessmentFormProps) {
+  const steps: Step[] = companyNameField
+    ? [
+        {
+          id: "company",
+          title: "Company",
+          fields: [{ name: "company_name", label: "Company name", type: "text", required: true }],
+        },
+        ...ASSESSMENT_SECTIONS,
+      ]
+    : ASSESSMENT_SECTIONS;
+
   const [values, setValues] = useState<Values>(() => {
     const initial: Values = {};
-    for (const section of ASSESSMENT_SECTIONS) {
-      for (const field of section.fields) {
+    for (const step of steps) {
+      for (const field of step.fields) {
         const existing = existingData?.[field.name];
         if (field.type === "checkbox-group") {
           initial[field.name] = Array.isArray(existing) ? (existing as string[]) : [];
@@ -40,51 +57,26 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
     return initial;
   });
 
-  const [activeSection, setActiveSection] = useState<string>(ASSESSMENT_SECTIONS[0].id);
-  const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((e) => e.isIntersecting);
-        if (visible.length > 0) {
-          setActiveSection(visible[0].target.id);
-        }
-      },
-      { rootMargin: "-10% 0px -70% 0px" }
-    );
-    for (const section of ASSESSMENT_SECTIONS) {
-      const el = sectionRefs.current[section.id];
-      if (el) observer.observe(el);
-    }
-    return () => observer.disconnect();
-  }, []);
-
-  const requiredFieldNames = useMemo(() => getRequiredFieldNames(), []);
-  const answeredCount = requiredFieldNames.filter((name) => isAnswered(values[name])).length;
-  const overallProgress = requiredFieldNames.length
-    ? Math.round((answeredCount / requiredFieldNames.length) * 100)
-    : 100;
-
-  function sectionProgress(sectionId: string) {
-    const section = ASSESSMENT_SECTIONS.find((s) => s.id === sectionId)!;
-    const required = section.fields.filter((f) => f.required);
-    if (!required.length) return { answered: 0, total: 0 };
-    const answered = required.filter((f) => isAnswered(values[f.name])).length;
-    return { answered, total: required.length };
-  }
+  const [activeIndex, setActiveIndex] = useState(0);
+  const activeStep = steps[activeIndex];
 
   function setValue(name: string, value: string | string[]) {
     setValues((prev) => ({ ...prev, [name]: value }));
   }
 
-  function scrollToSection(id: string) {
-    sectionRefs.current[id]?.scrollIntoView({ behavior: "smooth", block: "start" });
+  function stepProgress(step: Step) {
+    const required = step.fields.filter((f) => f.required);
+    if (!required.length) return { answered: 0, total: 0 };
+    return { answered: required.filter((f) => isAnswered(values[f.name])).length, total: required.length };
   }
+
+  const allRequired = steps.flatMap((s) => s.fields.filter((f) => f.required));
+  const overallAnswered = allRequired.filter((f) => isAnswered(values[f.name])).length;
+  const overallProgress = allRequired.length ? Math.round((overallAnswered / allRequired.length) * 100) : 100;
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-      <nav className="flex gap-2 overflow-x-auto pb-2 lg:sticky lg:top-6 lg:w-56 lg:shrink-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+      <nav className="flex gap-2 overflow-x-auto pb-2 lg:sticky lg:top-6 lg:w-64 lg:shrink-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
         <div className="mb-2 hidden lg:block">
           <p className="mb-1 text-xs uppercase tracking-wide text-muted">Progress</p>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
@@ -92,33 +84,20 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
           </div>
           <p className="mt-1 text-xs text-muted">{overallProgress}% complete</p>
         </div>
-        {companyNameField && (
-          <button
-            type="button"
-            onClick={() => scrollToSection("company")}
-            className={`shrink-0 rounded-full border px-3 py-1.5 text-left text-sm transition-colors lg:rounded-lg ${
-              activeSection === "company"
-                ? "border-accent bg-surface text-foreground"
-                : "border-border text-muted hover:text-foreground"
-            }`}
-          >
-            Company
-          </button>
-        )}
-        {ASSESSMENT_SECTIONS.map((section) => {
-          const progress = sectionProgress(section.id);
+        {steps.map((step, index) => {
+          const progress = stepProgress(step);
           return (
             <button
-              key={section.id}
+              key={step.id}
               type="button"
-              onClick={() => scrollToSection(section.id)}
+              onClick={() => setActiveIndex(index)}
               className={`flex shrink-0 items-center justify-between gap-2 rounded-full border px-3 py-1.5 text-left text-sm transition-colors lg:rounded-lg ${
-                activeSection === section.id
+                activeIndex === index
                   ? "border-accent bg-surface text-foreground"
                   : "border-border text-muted hover:text-foreground"
               }`}
             >
-              <span>{section.title}</span>
+              <span>{step.title}</span>
               {progress.total > 0 && (
                 <span className="text-xs text-muted">
                   {progress.answered}/{progress.total}
@@ -130,49 +109,57 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
       </nav>
 
       <form action={action} className="min-w-0 flex-1">
-        <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
-          {companyNameField && (
-            <fieldset
-              id="company"
-              ref={(el) => {
-                sectionRefs.current["company"] = el;
-              }}
-              className="flex scroll-mt-6 flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
-            >
-              <legend className="sr-only">Company</legend>
-              <h2 className="font-display text-lg text-foreground">Company</h2>
-              <label className="flex flex-col gap-1 text-sm text-muted">
-                Company name
-                <input name="company_name" required className={fieldClass} />
-              </label>
-            </fieldset>
-          )}
-
-          {ASSESSMENT_SECTIONS.map((section) => (
-            <fieldset
-              key={section.id}
-              id={section.id}
-              ref={(el) => {
-                sectionRefs.current[section.id] = el;
-              }}
-              className="flex scroll-mt-6 flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
-            >
-              <legend className="sr-only">{section.title}</legend>
-              <h2 className="font-display text-lg text-foreground">{section.title}</h2>
-              {section.description && <p className="-mt-2 text-xs text-muted">{section.description}</p>}
-              {section.fields.map((field) => (
-                <Field key={field.name} field={field} value={values[field.name]} onChange={setValue} />
-              ))}
-            </fieldset>
-          ))}
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          <h2 className="font-display text-lg text-foreground">{activeStep.title}</h2>
+          {activeStep.description && <p className="mt-1 text-xs text-muted">{activeStep.description}</p>}
+          <div className="mt-4 flex flex-col gap-4">
+            {activeStep.fields.map((field) => (
+              <Field key={field.name} field={field} value={values[field.name]} onChange={setValue} />
+            ))}
+          </div>
         </div>
 
-        <button
-          type="submit"
-          className="mt-6 rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
-        >
-          {submitLabel}
-        </button>
+        {/* Carry every other step's answers as hidden inputs so a single
+            submit captures the whole form, not just the visible step. */}
+        {steps
+          .filter((_, index) => index !== activeIndex)
+          .flatMap((step) => step.fields)
+          .map((field) => {
+            const value = values[field.name];
+            if (Array.isArray(value)) {
+              return value.map((v) => <input key={`${field.name}-${v}`} type="hidden" name={field.name} value={v} />);
+            }
+            return <input key={field.name} type="hidden" name={field.name} value={value ?? ""} />;
+          })}
+
+        <div className="mt-6 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
+            disabled={activeIndex === 0}
+            className="rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:text-foreground disabled:opacity-40"
+          >
+            Back
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              type="submit"
+              className="rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
+            >
+              {submitLabel}
+            </button>
+            {activeIndex < steps.length - 1 && (
+              <button
+                type="button"
+                onClick={() => setActiveIndex((i) => Math.min(steps.length - 1, i + 1))}
+                className="rounded-full border border-accent px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface-hover"
+              >
+                Next
+              </button>
+            )}
+          </div>
+        </div>
       </form>
     </div>
   );
