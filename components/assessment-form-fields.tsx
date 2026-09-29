@@ -73,6 +73,7 @@ function Field({ field, value }: { field: AssessmentField; value: unknown }) {
               </label>
             ))}
           </div>
+          {field.helpText && <span className="text-xs text-muted">{field.helpText}</span>}
         </fieldset>
       );
 

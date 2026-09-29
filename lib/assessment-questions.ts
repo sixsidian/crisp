@@ -88,6 +88,16 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         options: ["Yes, documented", "Informally, not documented", "No", "Unsure"],
         required: true,
       },
+      {
+        name: "mvc_storage_tiering",
+        label:
+          "Are minimum viable company (\"crown jewel\") systems stored on faster/higher-performance storage than non-critical systems, so they can be recovered quicker while cheaper systems sit on slower tiers?",
+        type: "radio",
+        options: ["Yes, tiered by criticality", "No, everything is on the same tier", "No tiering strategy in place", "Unsure"],
+        required: true,
+        helpText:
+          "RTO for a given system is largely a function of the storage it's recovered onto. Tiering by criticality lets crown-jewel systems recover fast without paying premium-storage cost for everything.",
+      },
     ],
   },
   {
@@ -185,6 +195,16 @@ export const ASSESSMENT_SECTIONS: AssessmentSection[] = [
         type: "radio",
         options: ["Yes", "No", "Unsure"],
         required: true,
+      },
+      {
+        name: "known_clean_recovery_point",
+        label:
+          "If an incident happened today, could they confidently identify their most recent verified-clean (malware-free) recovery point - or would that have to be worked out during the incident?",
+        type: "radio",
+        options: ["Yes, known/monitored continuously", "No, would have to work it out during an incident", "Unsure"],
+        required: true,
+        helpText:
+          "RTO and RPO both assume the recovered data is trustworthy. A fast restore of infected data isn't a recovery - it's reinfection. Knowing the last clean point in advance, rather than discovering it mid-incident, is what actually shortens real-world downtime.",
       },
       {
         name: "ransomware_detection_tooling",

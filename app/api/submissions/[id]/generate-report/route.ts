@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { COMMVAULT_PRODUCTS } from "@/lib/commvault-products";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -43,7 +44,9 @@ const REPORT_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          name: { type: "string" },
+          // Constrained to a verified list of real, currently-marketed
+          // Commvault products so the model can't invent product names.
+          name: { type: "string", enum: COMMVAULT_PRODUCTS.map((p) => p.name) },
           rationale: { type: "string" },
         },
         required: ["name", "rationale"],
@@ -87,13 +90,29 @@ export async function POST(
     return NextResponse.json({ error: "Submission not found" }, { status: 404 });
   }
 
-  // TODO: this prompt needs the real assessment framework and current
-  // Commvault product/positioning info supplied by Stu - do not ship
-  // with only this placeholder text.
+  // TODO: the scoring weights/methodology below still need review and
+  // sign-off from Stu/Commvault - treat as a reasonable starting point
+  // built from published guidance (NIST SP 800-184, CISA's
+  // #StopRansomware Guide), not a validated Commvault standard.
   const model = "claude-sonnet-5";
+  const productCatalog = COMMVAULT_PRODUCTS.map((p) => `- ${p.name}: ${p.description}`).join("\n");
+  const systemPrompt = `You are assessing a company's Cyber Resilience Readiness for a Commvault partner, based on a structured questionnaire submitted about that company. Apply these principles:
+
+1. Disaster recovery (DR) and cyber recovery (CR) are different problems. DR covers accidental/no-malice events (fire, flood, power loss, hardware failure) where the last backup can be trusted. Cyber recovery assumes an adversary was in the environment, so the last backup cannot automatically be trusted - it must be validated as clean before use. Score and discuss these separately; do not treat "has backups" as sufficient for cyber resilience.
+
+2. Recovery speed (RTO) is not the whole story. A fast restore of infected or corrupted data is not a recovery - it's reinfection. Whether the organization can identify a verified-clean recovery point in advance (rather than discovering it during an incident) matters as much as how fast they can restore. Weight this heavily in the cyber recovery score and call it out explicitly in category notes when it's missing.
+
+3. Recovery Time Objective is largely a function of the storage tier data is recovered onto. Recommend tiering: minimum viable company ("crown jewel") systems on faster/higher-performance storage to minimize their RTO, non-critical systems on slower/cheaper storage to control cost. Flag it as a gap if crown-jewel systems aren't currently prioritized this way.
+
+4. When recommending Commvault products, choose ONLY from this verified list - do not invent or guess product names:
+${productCatalog}
+
+Produce a readiness score (0-100), a plain-language summary, a category breakdown, concrete next steps for the partner conversation, and product recommendations drawn only from the list above with a rationale tying each one to a specific gap found in the submitted data.`;
+
   const message = await anthropic.messages.create({
     model,
     max_tokens: 4096,
+    system: systemPrompt,
     messages: [
       {
         role: "user",
