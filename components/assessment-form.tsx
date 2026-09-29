@@ -139,7 +139,8 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
               }}
               className="flex scroll-mt-6 flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
             >
-              <legend className="px-1 font-display text-lg text-foreground">Company</legend>
+              <legend className="sr-only">Company</legend>
+              <h2 className="font-display text-lg text-foreground">Company</h2>
               <label className="flex flex-col gap-1 text-sm text-muted">
                 Company name
                 <input name="company_name" required className={fieldClass} />
@@ -156,7 +157,8 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
               }}
               className="flex scroll-mt-6 flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
             >
-              <legend className="px-1 font-display text-lg text-foreground">{section.title}</legend>
+              <legend className="sr-only">{section.title}</legend>
+              <h2 className="font-display text-lg text-foreground">{section.title}</h2>
               {section.description && <p className="-mt-2 text-xs text-muted">{section.description}</p>}
               {section.fields.map((field) => (
                 <Field key={field.name} field={field} value={values[field.name]} onChange={setValue} />
