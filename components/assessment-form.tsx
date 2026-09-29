@@ -58,15 +58,37 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
   });
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const activeStep = steps[activeIndex];
   const questionNumbers = useMemo(() => getQuestionNumbers(), []);
 
   function setValue(name: string, value: string | string[]) {
     setValues((prev) => ({ ...prev, [name]: value }));
+    setSubmitError(null);
   }
 
   function visibleFields(step: Step) {
     return step.fields.filter((f) => isFieldVisible(f, values));
+  }
+
+  // Native `required` only protects the currently-visible step (every
+  // other step's fields are carried as unrequired hidden inputs), so a
+  // step reached via "Next" or the sidebar with unanswered required
+  // fields wouldn't otherwise block a save. This checks every step,
+  // not just the active one.
+  function firstIncompleteStepIndex(): number {
+    return steps.findIndex((step) =>
+      visibleFields(step).some((f) => f.required && !isAnswered(values[f.name]))
+    );
+  }
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    const badIndex = firstIncompleteStepIndex();
+    if (badIndex !== -1) {
+      e.preventDefault();
+      setActiveIndex(badIndex);
+      setSubmitError("Please answer every required question before saving - highlighted step needs attention.");
+    }
   }
 
   function stepProgress(step: Step) {
@@ -113,7 +135,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
         })}
       </nav>
 
-      <form action={action} className="min-w-0 flex-1">
+      <form action={action} onSubmit={handleSubmit} className="min-w-0 flex-1">
         <div className="rounded-2xl border border-border bg-surface p-6">
           <h2 className="font-display text-lg text-foreground">{activeStep.title}</h2>
           {activeStep.description && <p className="mt-1 text-xs text-muted">{activeStep.description}</p>}
@@ -158,6 +180,8 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
           })
           .map((input) => <input key={input.key} type="hidden" name={input.name} value={input.value} />)}
 
+        {submitError && <p className="mt-4 text-sm text-accent">{submitError}</p>}
+
         <div className="mt-6 flex items-center justify-between">
           <button
             type="button"
@@ -168,23 +192,32 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
             Back
           </button>
 
-          <div className="flex items-center gap-3">
+          {activeIndex < steps.length - 1 ? (
+            <button
+              type="button"
+              onClick={() => {
+                const missing = visibleFields(activeStep).some(
+                  (f) => f.required && !isAnswered(values[f.name])
+                );
+                if (missing) {
+                  setSubmitError("Please answer every required question on this step before moving on.");
+                  return;
+                }
+                setSubmitError(null);
+                setActiveIndex((i) => Math.min(steps.length - 1, i + 1));
+              }}
+              className="rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
+            >
+              Next
+            </button>
+          ) : (
             <button
               type="submit"
               className="rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
             >
               {submitLabel}
             </button>
-            {activeIndex < steps.length - 1 && (
-              <button
-                type="button"
-                onClick={() => setActiveIndex((i) => Math.min(steps.length - 1, i + 1))}
-                className="rounded-full border border-accent px-4 py-2 text-sm text-foreground transition-colors hover:bg-surface-hover"
-              >
-                Next
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </form>
     </div>
