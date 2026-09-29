@@ -22,34 +22,38 @@ export default async function CustomerDetailPage({
     .order("created_at", { ascending: false });
 
   if (!customer) {
-    return <main className="mx-auto max-w-2xl px-4 py-8">Customer not found.</main>;
+    return (
+      <main className="mx-auto max-w-2xl px-4 py-10 text-foreground sm:px-6">
+        Customer not found.
+      </main>
+    );
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-xl font-semibold">{customer.company_name}</h1>
+    <main className="mx-auto max-w-2xl px-4 py-10 sm:px-6">
+      <h1 className="mb-6 font-display text-2xl text-foreground">{customer.company_name}</h1>
 
       {submissions?.map((submission) => (
-        <div key={submission.id} className="mb-6 rounded border p-4">
-          <div className="mb-2 flex items-center justify-between">
-            <span className="text-sm text-gray-500">
-              Submission - {submission.status}
+        <div key={submission.id} className="mb-6 rounded-2xl border border-border bg-surface p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <span className="rounded-full border border-border px-2 py-0.5 text-xs uppercase tracking-wide text-muted">
+              {submission.status}
             </span>
             {submission.status !== "complete" && (
               <GenerateReportButton submissionId={submission.id} />
             )}
           </div>
 
-          <pre className="mb-3 overflow-x-auto rounded bg-gray-50 p-3 text-xs">
+          <pre className="mb-3 overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs text-muted">
             {JSON.stringify(submission.data, null, 2)}
           </pre>
 
           {submission.reports?.map((report) => (
-            <div key={report.id} className="rounded border-t pt-3">
-              <p className="font-medium">
+            <div key={report.id} className="border-t border-border pt-3">
+              <p className="font-medium text-foreground">
                 Readiness score: {report.readiness_score}/100
               </p>
-              <pre className="mt-2 overflow-x-auto rounded bg-gray-50 p-3 text-xs">
+              <pre className="mt-2 overflow-x-auto rounded-lg border border-border bg-background p-3 text-xs text-muted">
                 {JSON.stringify(report.report, null, 2)}
               </pre>
             </div>

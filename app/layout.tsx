@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Channel portal",
+  title: "CRISP",
   description: "Partner customer intake and Cyber Resilience Readiness reports",
 };
 

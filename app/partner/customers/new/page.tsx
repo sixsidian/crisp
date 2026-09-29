@@ -54,49 +54,58 @@ async function createCustomer(formData: FormData) {
   redirect(`/partner/customers/${customer.id}`);
 }
 
+const fieldClass =
+  "rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-accent focus:outline-none";
+
 export default function NewCustomerPage() {
   return (
-    <main className="mx-auto max-w-lg px-4 py-8">
-      <h1 className="mb-6 text-xl font-semibold">New customer</h1>
-      <form action={createCustomer} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-1 text-sm">
+    <main className="mx-auto max-w-lg px-4 py-10 sm:px-6">
+      <h1 className="mb-6 font-display text-2xl text-foreground">New customer</h1>
+      <form
+        action={createCustomer}
+        className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
+      >
+        <label className="flex flex-col gap-1 text-sm text-muted">
           Company name
-          <input name="company_name" required className="rounded border px-3 py-2" />
+          <input name="company_name" required className={fieldClass} />
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm text-muted">
           Sector
-          <select name="sector" required className="rounded border px-3 py-2">
+          <select name="sector" required className={fieldClass}>
             {SECTORS.map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm text-muted">
           Employee count
-          <select name="employee_band" required className="rounded border px-3 py-2">
+          <select name="employee_band" required className={fieldClass}>
             {EMPLOYEE_BANDS.map((b) => (
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
         </label>
 
-        <label className="flex flex-col gap-1 text-sm">
+        <label className="flex flex-col gap-1 text-sm text-muted">
           Current backup maturity
-          <select name="backup_maturity" required className="rounded border px-3 py-2">
+          <select name="backup_maturity" required className={fieldClass}>
             {BACKUP_MATURITY.map((b) => (
               <option key={b} value={b}>{b}</option>
             ))}
           </select>
         </label>
 
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-muted">
           Enter company-level information only. Do not include names, email
           addresses, or other details that identify a specific person.
         </p>
 
-        <button type="submit" className="rounded bg-black px-3 py-2 text-white">
+        <button
+          type="submit"
+          className="mt-2 rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
+        >
           Save and continue
         </button>
       </form>

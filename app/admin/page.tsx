@@ -23,14 +23,19 @@ export default async function AdminDashboard() {
     .limit(50);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-xl font-semibold">Admin</h1>
+    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <h1 className="mb-6 font-display text-2xl text-foreground">Admin</h1>
 
       <section className="mb-8">
-        <h2 className="mb-3 font-medium">Partners ({partners?.length ?? 0})</h2>
-        <ul className="flex flex-col gap-1 text-sm">
+        <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">
+          Partners ({partners?.length ?? 0})
+        </h2>
+        <ul className="flex flex-col gap-2 text-sm">
           {partners?.map((p) => (
-            <li key={p.id} className="rounded border px-3 py-2">
+            <li
+              key={p.id}
+              className="rounded-xl border border-border bg-surface px-4 py-2.5 text-foreground"
+            >
               {p.full_name ?? p.id} — {p.partner_company ?? "no company set"}
             </li>
           ))}
@@ -38,10 +43,13 @@ export default async function AdminDashboard() {
       </section>
 
       <section>
-        <h2 className="mb-3 font-medium">Recent submissions</h2>
-        <ul className="flex flex-col gap-1 text-sm">
+        <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">Recent submissions</h2>
+        <ul className="flex flex-col gap-2 text-sm">
           {submissions?.map((s) => (
-            <li key={s.id} className="rounded border px-3 py-2">
+            <li
+              key={s.id}
+              className="rounded-xl border border-border bg-surface px-4 py-2.5 text-foreground"
+            >
               {s.customers?.[0]?.company_name ?? "unknown customer"} — {s.status}
             </li>
           ))}

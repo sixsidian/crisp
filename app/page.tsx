@@ -2,12 +2,21 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <main className="mx-auto flex min-h-screen max-w-lg flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-2xl font-semibold">Channel portal</h1>
-      <p className="text-sm text-gray-500">
-        Cyber Resilience Readiness assessments for Commvault partners.
+    <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4 text-center">
+      <p className="mb-3 text-sm uppercase tracking-[0.2em] text-accent">
+        Commvault partner tool
       </p>
-      <Link href="/login" className="rounded bg-black px-4 py-2 text-white">
+      <h1 className="font-display text-5xl text-foreground sm:text-6xl">
+        crisp
+      </h1>
+      <p className="mt-4 max-w-md text-muted">
+        Together, we turn customer conversations into Cyber Resilience
+        Readiness scores.
+      </p>
+      <Link
+        href="/login"
+        className="mt-8 rounded-full bg-accent px-6 py-3 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
+      >
         Partner login
       </Link>
     </main>
