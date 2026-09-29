@@ -11,11 +11,23 @@ async function createCustomer(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("partner_org_id")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.partner_org_id) {
+    throw new Error(
+      "Your account isn't linked to a partner organization yet - ask your admin to set this up before adding customers."
+    );
+  }
+
   const companyName = formData.get("company_name") as string;
 
   const { data: customer, error } = await supabase
     .from("customers")
-    .insert({ partner_id: user.id, company_name: companyName })
+    .insert({ partner_id: user.id, org_id: profile.partner_org_id, company_name: companyName })
     .select()
     .single();
 
@@ -39,6 +51,13 @@ async function createCustomer(formData: FormData) {
   if (submissionError || !submission) {
     throw new Error(submissionError?.message ?? "Failed to create submission");
   }
+
+  await supabase.from("activity_log").insert({
+    customer_id: customer.id,
+    submission_id: submission.id,
+    actor_id: user.id,
+    action: "customer_created",
+  });
 
   redirect(`/partner/customers/${customer.id}`);
 }

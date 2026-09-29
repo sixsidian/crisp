@@ -170,5 +170,12 @@ Produce a readiness score (0-100), a plain-language summary, a category breakdow
     .update({ status: "complete" })
     .eq("id", submissionId);
 
+  await serviceClient.from("activity_log").insert({
+    customer_id: submission.customer_id,
+    submission_id: submissionId,
+    actor_id: user.id,
+    action: "report_generated",
+  });
+
   return NextResponse.json(saved);
 }

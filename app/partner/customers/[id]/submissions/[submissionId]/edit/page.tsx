@@ -26,6 +26,13 @@ async function updateSubmission(
     throw new Error(error.message);
   }
 
+  await supabase.from("activity_log").insert({
+    customer_id: customerId,
+    submission_id: submissionId,
+    actor_id: user.id,
+    action: "assessment_updated",
+  });
+
   redirect(`/partner/customers/${customerId}`);
 }
 

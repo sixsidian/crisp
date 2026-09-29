@@ -12,7 +12,7 @@ export default async function AdminDashboard() {
 
   const { data: partners } = await supabase
     .from("profiles")
-    .select("id, full_name, partner_company, role, created_at")
+    .select("id, full_name, role, created_at, partner_organizations(name)")
     .eq("role", "partner")
     .order("created_at", { ascending: false });
 
@@ -36,7 +36,7 @@ export default async function AdminDashboard() {
               key={p.id}
               className="rounded-xl border border-border bg-surface px-4 py-2.5 text-foreground"
             >
-              {p.full_name ?? p.id} — {p.partner_company ?? "no company set"}
+              {p.full_name ?? p.id} — {p.partner_organizations?.[0]?.name ?? "no organization set"}
             </li>
           ))}
         </ul>

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { GenerateReportButton } from "./generate-report-button";
 import { SubmissionDataView } from "@/components/submission-data-view";
 import { ReportView, type Report } from "@/components/report-view";
+import { describeActivity } from "@/lib/activity-log";
 
 export default async function CustomerDetailPage({
   params,
@@ -21,6 +22,12 @@ export default async function CustomerDetailPage({
   const { data: submissions } = await supabase
     .from("submissions")
     .select("id, status, data, created_at, reports(id, readiness_score, report, generated_at)")
+    .eq("customer_id", id)
+    .order("created_at", { ascending: false });
+
+  const { data: history } = await supabase
+    .from("activity_log")
+    .select("id, action, created_at, profiles(full_name)")
     .eq("customer_id", id)
     .order("created_at", { ascending: false });
 
@@ -66,6 +73,28 @@ export default async function CustomerDetailPage({
           ))}
         </div>
       ))}
+
+      {!!history?.length && (
+        <div className="mt-8">
+          <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">History</h2>
+          <ul className="flex flex-col gap-2">
+            {history.map((entry) => {
+              const actorName = entry.profiles?.[0]?.full_name;
+              return (
+                <li key={entry.id} className="flex items-baseline justify-between text-sm">
+                  <span className="text-foreground">
+                    {describeActivity(entry.action)}
+                    {actorName && <span className="text-muted"> by {actorName}</span>}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted">
+                    {new Date(entry.created_at).toLocaleString("en-GB")}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </main>
   );
 }
