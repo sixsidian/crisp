@@ -27,12 +27,18 @@ export function SubmissionDataView({ data }: { data: Record<string, unknown> }) 
           <div key={section.id}>
             <h3 className="mb-2 text-xs uppercase tracking-wide text-muted">{section.title}</h3>
             <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
-              {entries.map((field) => (
-                <div key={field.name}>
-                  <dt className="text-xs text-muted">{FIELD_LABELS.get(field.name) ?? field.label}</dt>
-                  <dd className="text-sm text-foreground">{formatValue(data[field.name])}</dd>
-                </div>
-              ))}
+              {entries.map((field) => {
+                const note = data[`${field.name}__note`];
+                return (
+                  <div key={field.name}>
+                    <dt className="text-xs text-muted">{FIELD_LABELS.get(field.name) ?? field.label}</dt>
+                    <dd className="text-sm text-foreground">{formatValue(data[field.name])}</dd>
+                    {typeof note === "string" && note.trim() && (
+                      <dd className="mt-0.5 text-xs italic text-muted">{note}</dd>
+                    )}
+                  </div>
+                );
+              })}
             </dl>
           </div>
         );
