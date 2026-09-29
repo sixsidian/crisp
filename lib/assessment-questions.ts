@@ -338,6 +338,31 @@ export function getRequiredFieldNames(): string[] {
   );
 }
 
+// Which required, currently-applicable (per dependsOn) questions are
+// still unanswered in a stored submission's data. Used to gate report
+// generation on a submission that's otherwise allowed to be saved
+// incomplete as a draft across multiple visits.
+export function getMissingRequiredFields(data: Record<string, unknown>): AssessmentField[] {
+  const values: Record<string, string | string[]> = {};
+  for (const section of ASSESSMENT_SECTIONS) {
+    for (const field of section.fields) {
+      const raw = data[field.name];
+      values[field.name] = Array.isArray(raw) ? (raw as string[]) : typeof raw === "string" ? raw : "";
+    }
+  }
+
+  const missing: AssessmentField[] = [];
+  for (const section of ASSESSMENT_SECTIONS) {
+    for (const field of section.fields) {
+      if (!field.required || !isFieldVisible(field, values)) continue;
+      const value = values[field.name];
+      const answered = Array.isArray(value) ? value.length > 0 : value.length > 0;
+      if (!answered) missing.push(field);
+    }
+  }
+  return missing;
+}
+
 // Sequential reference numbers (1, 2, 3...) for every question, in
 // schema order, so a question can be referenced unambiguously (e.g.
 // "Q14") regardless of which step it's currently shown in.

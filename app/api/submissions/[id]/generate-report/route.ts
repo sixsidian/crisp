@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { COMMVAULT_PRODUCTS } from "@/lib/commvault-products";
+import { getMissingRequiredFields } from "@/lib/assessment-questions";
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -88,6 +89,21 @@ export async function POST(
 
   if (error || !submission) {
     return NextResponse.json({ error: "Submission not found" }, { status: 404 });
+  }
+
+  // The assessment form allows saving a submission as an incomplete
+  // draft across multiple visits, so completeness is only enforced
+  // here - an AI-generated score from a mostly-empty submission isn't
+  // meaningful.
+  const missingFields = getMissingRequiredFields((submission.data as Record<string, unknown>) ?? {});
+  if (missingFields.length > 0) {
+    const plural = missingFields.length === 1 ? "question" : "questions";
+    return NextResponse.json(
+      {
+        error: `${missingFields.length} required ${plural} still need answering. Edit the submission to finish them before generating a report.`,
+      },
+      { status: 400 }
+    );
   }
 
   // TODO: the scoring weights/methodology below still need review and

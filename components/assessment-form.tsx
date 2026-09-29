@@ -13,6 +13,13 @@ interface Step {
   title: string;
   description?: string;
   fields: AssessmentField[];
+  // Only the "Company" step is hard-gated: company_name is a NOT NULL
+  // column on customers, so an empty value would fail at the database
+  // rather than just save as an incomplete answer. Every other step is
+  // free to save incomplete - a partner may not finish the whole
+  // assessment in one visit, and getMissingRequiredFields() gates
+  // report generation instead of blocking saves here.
+  hardRequired?: boolean;
 }
 
 function isAnswered(value: string | string[] | undefined): boolean {
@@ -37,6 +44,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
           id: "company",
           title: "Company",
           fields: [{ name: "company_name", label: "Company name", type: "text", required: true }],
+          hardRequired: true,
         },
         ...ASSESSMENT_SECTIONS,
       ]
@@ -71,15 +79,20 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
     return step.fields.filter((f) => isFieldVisible(f, values));
   }
 
-  // Native `required` only protects the currently-visible step (every
-  // other step's fields are carried as unrequired hidden inputs), so a
-  // step reached via "Next" or the sidebar with unanswered required
-  // fields wouldn't otherwise block a save. This checks every step,
-  // not just the active one.
+  // A partner may not finish the whole assessment in one visit, so
+  // only the "Company" step (company_name is a NOT NULL database
+  // column) blocks saving. Every other step can be saved incomplete -
+  // report generation is what actually enforces the required
+  // questionnaire fields (see getMissingRequiredFields).
   function firstIncompleteStepIndex(): number {
-    return steps.findIndex((step) =>
-      visibleFields(step).some((f) => f.required && !isAnswered(values[f.name]))
+    return steps.findIndex(
+      (step) => step.hardRequired && visibleFields(step).some((f) => f.required && !isAnswered(values[f.name]))
     );
+  }
+
+  function goToStep(index: number) {
+    setSubmitError(null);
+    setActiveIndex(index);
   }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -87,7 +100,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
     if (badIndex !== -1) {
       e.preventDefault();
       setActiveIndex(badIndex);
-      setSubmitError("Please answer every required question before saving - highlighted step needs attention.");
+      setSubmitError("Enter a company name before saving.");
     }
   }
 
@@ -117,7 +130,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
             <button
               key={step.id}
               type="button"
-              onClick={() => setActiveIndex(index)}
+              onClick={() => goToStep(index)}
               className={`flex shrink-0 items-center justify-between gap-2 rounded-full border px-3 py-1.5 text-left text-sm transition-colors lg:rounded-lg ${
                 activeIndex === index
                   ? "border-accent bg-surface text-foreground"
@@ -148,10 +161,19 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
                 value={values[field.name]}
                 noteValue={values[`${field.name}__note`]}
                 onChange={setValue}
+                nativeRequired={Boolean(activeStep.hardRequired) && Boolean(field.required)}
               />
             ))}
           </div>
         </div>
+
+        {!activeStep.hardRequired && (
+          <p className="mt-3 text-xs text-muted">
+            You don&apos;t need to finish everything now - click through to the last step and
+            select &quot;{submitLabel}&quot; to save your progress, then come back to finish the
+            rest later. Fields marked * are needed before a report can be generated.
+          </p>
+        )}
 
         {/* Carry every other step's answers as hidden inputs so a single
             submit captures the whole form, not just the visible step.
@@ -185,7 +207,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
         <div className="mt-6 flex items-center justify-between">
           <button
             type="button"
-            onClick={() => setActiveIndex((i) => Math.max(0, i - 1))}
+            onClick={() => goToStep(Math.max(0, activeIndex - 1))}
             disabled={activeIndex === 0}
             className="rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:text-foreground disabled:opacity-40"
           >
@@ -196,15 +218,16 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
             <button
               type="button"
               onClick={() => {
-                const missing = visibleFields(activeStep).some(
-                  (f) => f.required && !isAnswered(values[f.name])
-                );
-                if (missing) {
-                  setSubmitError("Please answer every required question on this step before moving on.");
-                  return;
+                if (activeStep.hardRequired) {
+                  const missing = visibleFields(activeStep).some(
+                    (f) => f.required && !isAnswered(values[f.name])
+                  );
+                  if (missing) {
+                    setSubmitError("Enter a company name before continuing.");
+                    return;
+                  }
                 }
-                setSubmitError(null);
-                setActiveIndex((i) => Math.min(steps.length - 1, i + 1));
+                goToStep(Math.min(steps.length - 1, activeIndex + 1));
               }}
               className="rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
             >
@@ -230,14 +253,21 @@ function Field({
   value,
   noteValue,
   onChange,
+  nativeRequired,
 }: {
   field: AssessmentField;
   number?: number;
   value: string | string[] | undefined;
   noteValue?: string | string[];
   onChange: (name: string, value: string | string[]) => void;
+  // Whether the browser should enforce this field via the native
+  // `required` attribute. Only true on the hard-gated "Company" step -
+  // everywhere else, `field.required` just marks a question as needed
+  // before a report can be generated (see the * suffix below), not as
+  // something that blocks saving the form.
+  nativeRequired: boolean;
 }) {
-  const labelText = number ? `${number}. ${field.label}` : field.label;
+  const labelText = `${number ? `${number}. ` : ""}${field.label}${field.required ? " *" : ""}`;
   const notesBox = field.allowNotes && (
     <label className="flex flex-col gap-1 text-xs text-muted">
       Add detail (optional)
@@ -260,7 +290,7 @@ function Field({
           {labelText}
           <select
             name={field.name}
-            required={field.required}
+            required={nativeRequired}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(field.name, e.target.value)}
             className={fieldClass}
@@ -292,7 +322,7 @@ function Field({
                   type="radio"
                   name={field.name}
                   value={option}
-                  required={field.required}
+                  required={nativeRequired}
                   checked={value === option}
                   onChange={() => onChange(field.name, option)}
                 />
@@ -343,7 +373,7 @@ function Field({
           {labelText}
           <textarea
             name={field.name}
-            required={field.required}
+            required={nativeRequired}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(field.name, e.target.value)}
             rows={3}
@@ -362,7 +392,7 @@ function Field({
           <input
             type="text"
             name={field.name}
-            required={field.required}
+            required={nativeRequired}
             value={typeof value === "string" ? value : ""}
             onChange={(e) => onChange(field.name, e.target.value)}
             className={fieldClass}
