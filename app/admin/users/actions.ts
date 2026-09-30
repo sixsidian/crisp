@@ -5,10 +5,6 @@ import { revalidatePath } from "next/cache";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { requireAdmin } from "@/lib/require-admin";
 
-// 12 random bytes -> 16-char base64url string (upper/lower/digits/-/_).
-// Well above Supabase's default minimum password length (6). Shown once
-// to the admin (see CreateUserState.success) to relay to the new user
-// out-of-band - this app deliberately doesn't email login links yet.
 function generateTempPassword(): string {
   return randomBytes(12).toString("base64url");
 }
@@ -30,18 +26,15 @@ export async function createUser(
 
   const email = (formData.get("email") as string)?.trim();
   const fullName = (formData.get("full_name") as string)?.trim();
-  const orgId = formData.get("partner_org_id") as string;
+  const role = formData.get("role") === "admin" ? "admin" : "partner";
+  const orgId = (formData.get("partner_org_id") as string) || null;
 
   if (!email) return { error: "Email is required." };
-  if (!orgId) return { error: "Select a partner organization." };
+  if (role === "partner" && !orgId) return { error: "Select a partner organisation." };
 
   const tempPassword = generateTempPassword();
   const serviceClient = createServiceRoleClient();
 
-  // Raw SQL can't safely create an auth user - GoTrue has to hash the
-  // password and populate its own internal columns. This is Supabase's
-  // documented Admin API for exactly that:
-  // https://supabase.com/docs/reference/javascript/auth-admin-createuser
   const { data: created, error: createError } = await serviceClient.auth.admin.createUser({
     email,
     password: tempPassword,
@@ -52,14 +45,12 @@ export async function createUser(
     return { error: createError?.message ?? "Failed to create user." };
   }
 
-  // handle_new_user() (migration 0002) already fired and inserted a bare
-  // profiles row (role defaults to 'partner') for this new auth user -
-  // fill in the rest of it.
   const { error: profileError } = await serviceClient
     .from("profiles")
     .update({
       full_name: fullName || null,
       partner_org_id: orgId,
+      role,
       must_change_password: true,
     })
     .eq("id", created.user.id);
@@ -81,23 +72,44 @@ export async function reassignUser(formData: FormData) {
   const orgId = formData.get("partner_org_id") as string;
 
   if (!userId) throw new Error("Missing user.");
-  if (!orgId) throw new Error("Select a partner organization.");
+  if (!orgId) throw new Error("Select a partner organisation.");
 
-  // Service role, not the normal client: this needs to update ANOTHER
-  // user's profile row. (Migration 0005 also adds an "admin update" RLS
-  // policy so an admin's own session could do this too, but using the
-  // service client here matches the create-user action above and keeps
-  // this action working even if that policy is ever removed.)
-  //
-  // No extra bookkeeping needed for "loses access to the old org's
-  // customers" - that's just what org-based RLS (migration 0003) already
-  // enforces the moment partner_org_id changes.
   const serviceClient = createServiceRoleClient();
   const { error } = await serviceClient
     .from("profiles")
     .update({ partner_org_id: orgId })
     .eq("id", userId);
 
+  if (error) throw new Error(error.message);
+
+  revalidatePath("/admin/users");
+}
+
+export async function deleteUser(formData: FormData) {
+  const admin = await requireAdmin();
+
+  const userId = formData.get("user_id") as string;
+  if (!userId) throw new Error("Missing user.");
+  if (userId === admin.id) throw new Error("You can't delete your own account.");
+
+  const serviceClient = createServiceRoleClient();
+
+  const { data: target } = await serviceClient
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  if (target?.role === "admin") {
+    const { count } = await serviceClient
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "admin");
+
+    if ((count ?? 0) <= 1) throw new Error("Can't delete the last admin account.");
+  }
+
+  const { error } = await serviceClient.auth.admin.deleteUser(userId);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/users");

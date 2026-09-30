@@ -19,7 +19,7 @@ async function createCustomer(formData: FormData) {
 
   if (!profile?.partner_org_id) {
     throw new Error(
-      "Your account isn't linked to a partner organization yet - ask your admin to set this up before adding customers."
+      "Your account isn't linked to a partner organisation yet - ask your admin to set this up before adding customers."
     );
   }
 

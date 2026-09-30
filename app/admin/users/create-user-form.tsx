@@ -6,12 +6,13 @@ import { createUser, type CreateUserState } from "./actions";
 const initialState: CreateUserState = {};
 
 export function CreateUserForm({
-  organizations,
+  organisations,
 }: {
-  organizations: { id: string; name: string }[];
+  organisations: { id: string; name: string }[];
 }) {
   const [state, formAction, pending] = useActionState(createUser, initialState);
   const [copied, setCopied] = useState(false);
+  const [role, setRole] = useState("partner");
 
   const fieldClass =
     "rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-accent focus:outline-none";
@@ -21,11 +22,20 @@ export function CreateUserForm({
       <form action={formAction} className="flex flex-col gap-3">
         <input type="email" name="email" required placeholder="Email" className={fieldClass} />
         <input type="text" name="full_name" placeholder="Full name" className={fieldClass} />
-        <select name="partner_org_id" required defaultValue="" className={fieldClass}>
-          <option value="" disabled>
-            Select partner organization
+        <select
+          name="role"
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          className={fieldClass}
+        >
+          <option value="partner">Partner</option>
+          <option value="admin">Admin</option>
+        </select>
+        <select name="partner_org_id" required={role === "partner"} defaultValue="" className={fieldClass}>
+          <option value="">
+            {role === "admin" ? "No organisation (optional)" : "Select partner organisation"}
           </option>
-          {organizations.map((org) => (
+          {organisations.map((org) => (
             <option key={org.id} value={org.id}>
               {org.name}
             </option>

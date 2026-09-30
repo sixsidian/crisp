@@ -29,8 +29,8 @@ export default async function AdminDashboard() {
       <div className="mb-6 flex items-center justify-between">
         <h1 className="font-display text-2xl text-foreground">Admin</h1>
         <div className="flex gap-4 text-sm">
-          <Link href="/admin/organizations" className="text-muted transition-colors hover:text-foreground">
-            Organizations
+          <Link href="/admin/organisations" className="text-muted transition-colors hover:text-foreground">
+            Organisations
           </Link>
           <Link href="/admin/users" className="text-muted transition-colors hover:text-foreground">
             Users
@@ -48,7 +48,7 @@ export default async function AdminDashboard() {
               key={p.id}
               className="rounded-xl border border-border bg-surface px-4 py-2.5 text-foreground"
             >
-              {p.full_name ?? p.id} — {p.partner_organizations?.[0]?.name ?? "no organization set"}
+              {p.full_name ?? p.id} — {p.partner_organizations?.[0]?.name ?? "no organisation set"}
             </li>
           ))}
         </ul>

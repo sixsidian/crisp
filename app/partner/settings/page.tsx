@@ -100,7 +100,7 @@ export default function SettingsPage() {
         className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6"
       >
         <h2 className="font-display text-lg text-foreground">Name</h2>
-        <p className="text-xs text-muted">Shown to colleagues at your organization on shared customer records.</p>
+        <p className="text-xs text-muted">Shown to colleagues at your organisation on shared customer records.</p>
         <input
           type="text"
           required
