@@ -31,7 +31,7 @@ export function CreateUserForm({
           <option value="partner">Partner</option>
           <option value="admin">Admin</option>
         </select>
-        <select name="partner_org_id" required={role === "partner"} defaultValue="" className={fieldClass}>
+        <select name="partner_organisation_id" required={role === "partner"} defaultValue="" className={fieldClass}>
           <option value="">
             {role === "admin" ? "No organisation (optional)" : "Select partner organisation"}
           </option>

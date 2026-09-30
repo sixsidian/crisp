@@ -7,7 +7,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminOrganisationsPage() {
   const supabase = await createClient();
   const { data: orgs } = await supabase
-    .from("partner_organizations")
+    .from("partner_organisations")
     .select("id, name, created_at")
     .order("name");
 

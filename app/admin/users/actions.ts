@@ -27,7 +27,7 @@ export async function createUser(
   const email = (formData.get("email") as string)?.trim();
   const fullName = (formData.get("full_name") as string)?.trim();
   const role = formData.get("role") === "admin" ? "admin" : "partner";
-  const orgId = (formData.get("partner_org_id") as string) || null;
+  const orgId = (formData.get("partner_organisation_id") as string) || null;
 
   if (!email) return { error: "Email is required." };
   if (role === "partner" && !orgId) return { error: "Select a partner organisation." };
@@ -49,7 +49,7 @@ export async function createUser(
     .from("profiles")
     .update({
       full_name: fullName || null,
-      partner_org_id: orgId,
+      partner_organisation_id: orgId,
       role,
       must_change_password: true,
     })
@@ -69,7 +69,7 @@ export async function reassignUser(formData: FormData) {
   await requireAdmin();
 
   const userId = formData.get("user_id") as string;
-  const orgId = formData.get("partner_org_id") as string;
+  const orgId = formData.get("partner_organisation_id") as string;
 
   if (!userId) throw new Error("Missing user.");
   if (!orgId) throw new Error("Select a partner organisation.");
@@ -77,7 +77,7 @@ export async function reassignUser(formData: FormData) {
   const serviceClient = createServiceRoleClient();
   const { error } = await serviceClient
     .from("profiles")
-    .update({ partner_org_id: orgId })
+    .update({ partner_organisation_id: orgId })
     .eq("id", userId);
 
   if (error) throw new Error(error.message);

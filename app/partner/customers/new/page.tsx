@@ -13,11 +13,11 @@ async function createCustomer(formData: FormData) {
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("partner_org_id")
+    .select("partner_organisation_id")
     .eq("id", user.id)
     .single();
 
-  if (!profile?.partner_org_id) {
+  if (!profile?.partner_organisation_id) {
     throw new Error(
       "Your account isn't linked to a partner organisation yet - ask your admin to set this up before adding customers."
     );
@@ -27,7 +27,7 @@ async function createCustomer(formData: FormData) {
 
   const { data: customer, error } = await supabase
     .from("customers")
-    .insert({ partner_id: user.id, org_id: profile.partner_org_id, company_name: companyName })
+    .insert({ partner_id: user.id, organisation_id: profile.partner_organisation_id, company_name: companyName })
     .select()
     .single();
 

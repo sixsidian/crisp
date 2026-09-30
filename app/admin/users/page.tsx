@@ -17,14 +17,14 @@ export default async function AdminUsersPage({
   const supabase = await createClient();
 
   const { data: orgs } = await supabase
-    .from("partner_organizations")
+    .from("partner_organisations")
     .select("id, name")
     .order("name");
 
   const serviceClient = createServiceRoleClient();
   const { data: users } = await serviceClient
     .from("profiles")
-    .select("id, full_name, role, must_change_password, partner_org_id, created_at")
+    .select("id, full_name, role, must_change_password, partner_organisation_id, created_at")
     .order("created_at", { ascending: false });
 
   const {
@@ -32,7 +32,9 @@ export default async function AdminUsersPage({
   } = await serviceClient.auth.admin.listUsers({ perPage: 200 });
   const emailById = new Map(authUsers.map((u) => [u.id, u.email ?? "(no email)"]));
 
-  const filteredUsers = orgFilter ? users?.filter((u) => u.partner_org_id === orgFilter) : users;
+  const filteredUsers = orgFilter
+    ? users?.filter((u) => u.partner_organisation_id === orgFilter)
+    : users;
 
   const fieldClass =
     "rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-accent focus:outline-none";
@@ -79,8 +81,8 @@ export default async function AdminUsersPage({
                 <form action={reassignUser} className="flex items-center gap-2">
                   <input type="hidden" name="user_id" value={u.id} />
                   <select
-                    name="partner_org_id"
-                    defaultValue={u.partner_org_id ?? ""}
+                    name="partner_organisation_id"
+                    defaultValue={u.partner_organisation_id ?? ""}
                     className={fieldClass}
                   >
                     <option value="" disabled>
@@ -96,7 +98,7 @@ export default async function AdminUsersPage({
                     type="submit"
                     className="rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent hover:text-foreground"
                   >
-                    {u.partner_org_id ? "Reassign" : "Assign"}
+                    {u.partner_organisation_id ? "Reassign" : "Assign"}
                   </button>
                 </form>
                 <form action={deleteUser}>

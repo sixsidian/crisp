@@ -10,9 +10,9 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
 
   // The organization (e.g. "Commvault") the signed-in user belongs to -
   // shown top-right in place of their email. Two plain queries instead
-  // of a PostgREST relationship embed (profiles -> partner_organizations)
+  // of a PostgREST relationship embed (profiles -> partner_organisations)
   // - an embed depends on PostgREST's schema cache having picked up the
-  // partner_org_id foreign key, which can lag behind a migration run
+  // partner_organisation_id foreign key, which can lag behind a migration run
   // straight through the SQL editor rather than Supabase's own
   // migration tooling.
   let orgName: string | null = null;
@@ -20,17 +20,17 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("partner_org_id, role")
+      .select("partner_organisation_id, role")
       .eq("id", user.id)
       .single();
 
     isAdmin = profile?.role === "admin";
 
-    if (profile?.partner_org_id) {
+    if (profile?.partner_organisation_id) {
       const { data: org } = await supabase
-        .from("partner_organizations")
+        .from("partner_organisations")
         .select("name")
-        .eq("id", profile.partner_org_id)
+        .eq("id", profile.partner_organisation_id)
         .single();
       orgName = org?.name ?? null;
     }

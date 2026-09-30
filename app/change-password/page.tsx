@@ -63,7 +63,7 @@ export default function ChangePasswordPage() {
 
     // "profiles: update own" (0001) lets a user update their own row,
     // and the privilege-escalation trigger (0003) only ever reverts
-    // role/partner_org_id, so this column-only update goes through.
+    // role/partner_organisation_id, so this column-only update goes through.
     const { data: profile, error: profileError } = await supabase
       .from("profiles")
       .update({ must_change_password: false })

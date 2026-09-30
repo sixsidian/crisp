@@ -11,7 +11,7 @@ export async function createOrganisation(formData: FormData) {
   if (!name) throw new Error("Organisation name is required.");
 
   const supabase = await createClient();
-  const { error } = await supabase.from("partner_organizations").insert({ name });
+  const { error } = await supabase.from("partner_organisations").insert({ name });
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/organisations");
@@ -27,7 +27,7 @@ export async function renameOrganisation(formData: FormData) {
   if (!name) throw new Error("Organisation name is required.");
 
   const supabase = await createClient();
-  const { error } = await supabase.from("partner_organizations").update({ name }).eq("id", id);
+  const { error } = await supabase.from("partner_organisations").update({ name }).eq("id", id);
   if (error) throw new Error(error.message);
 
   revalidatePath("/admin/organisations");
