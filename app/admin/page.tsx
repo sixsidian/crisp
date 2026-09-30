@@ -1,12 +1,14 @@
+import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 // This page reads live data behind auth - never statically prerender it.
 export const dynamic = "force-dynamic";
 
-// Admin overview - uses the service-role client because an admin
-// needs to see every partner's data, which RLS otherwise blocks.
-// The middleware already checked profiles.role === 'admin' before
-// this page is reachable.
+// Admin overview - uses the service-role client because an admin needs
+// to see every partner's data, which RLS otherwise blocks. The actual
+// access control for this happens one level up, in app/admin/layout.tsx
+// (auth + profiles.role === 'admin' check, redirecting otherwise) - this
+// page has no auth check of its own and relies entirely on that layout.
 export default async function AdminDashboard() {
   const supabase = createServiceRoleClient();
 
@@ -24,7 +26,17 @@ export default async function AdminDashboard() {
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <h1 className="mb-6 font-display text-2xl text-foreground">Admin</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="font-display text-2xl text-foreground">Admin</h1>
+        <div className="flex gap-4 text-sm">
+          <Link href="/admin/organizations" className="text-muted transition-colors hover:text-foreground">
+            Organizations
+          </Link>
+          <Link href="/admin/users" className="text-muted transition-colors hover:text-foreground">
+            Users
+          </Link>
+        </div>
+      </div>
 
       <section className="mb-8">
         <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">
