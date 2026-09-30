@@ -16,12 +16,15 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
   // straight through the SQL editor rather than Supabase's own
   // migration tooling.
   let orgName: string | null = null;
+  let isAdmin = false;
   if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("partner_org_id")
+      .select("partner_org_id, role")
       .eq("id", user.id)
       .single();
+
+    isAdmin = profile?.role === "admin";
 
     if (profile?.partner_org_id) {
       const { data: org } = await supabase
@@ -60,6 +63,11 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
         <div className="flex items-center gap-4">
           {user && (
             <span className="hidden text-sm text-muted lg:inline">{orgName ?? user.email}</span>
+          )}
+          {isAdmin && (
+            <Link href="/admin" className="text-sm text-muted transition-colors hover:text-foreground">
+              Admin
+            </Link>
           )}
           <Link
             href="/partner/settings"
