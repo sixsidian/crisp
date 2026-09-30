@@ -1,20 +1,19 @@
 @import "tailwindcss";
 
 /*
-  Color scheme lifted from the reference (ventriloc-style) design:
-  deep maroon background, warm cream text, vivid orange accent.
-  Change these five values to retheme the whole app.
+  "Warm Stone" scheme: warm off-white background, dark warm-grey text,
+  a dark rust accent. Change these values to retheme the whole app.
 */
 :root {
-  --background: #2b1310;
-  --surface: #3a1c17;
-  --surface-hover: #45231d;
-  --border: #5a2e26;
-  --foreground: #f3e6dd;
-  --muted: #c9a99a;
-  --accent: #f2603c;
-  --accent-hover: #ff7952;
-  --accent-foreground: #2b1310;
+  --background: #f5f1ea;
+  --surface: #ffffff;
+  --surface-hover: #f0ebe1;
+  --border: #ded5c4;
+  --foreground: #2b241a;
+  --muted: #7a7061;
+  --accent: #b8541f;
+  --accent-hover: #cc632a;
+  --accent-foreground: #fff8f2;
 }
 
 @theme inline {
