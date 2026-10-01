@@ -47,15 +47,10 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
     <header className="sticky top-0 z-10 border-b border-border bg-surface">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
         <div className="flex min-w-0 items-center gap-3">
-          <Link href={homeHref} className="flex shrink-0 items-center gap-2">
-            <span className="font-display text-base font-semibold tracking-tight text-foreground">
-              C.R.I.S.P
-            </span>
-            {variant === "admin" && <span className="chip">Admin</span>}
-          </Link>
           <Link href={homeHref} className="btn btn-ghost btn-sm shrink-0">
             Home
           </Link>
+          {variant === "admin" && <span className="chip">Admin</span>}
         </div>
 
         {user && <AccountMenu label={orgName ?? user.email ?? "Account"} links={menuLinks} />}
