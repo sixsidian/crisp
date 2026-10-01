@@ -80,7 +80,10 @@ export default async function PartnerDashboard({
                       ` · added by ${creatorNames.get(customer.partner_id)}`}
                   </p>
                 </div>
-                {latest && <StatusBadge status={latest.status} />}
+                <div className="flex items-center gap-3">
+                  {latest && <StatusBadge status={latest.status} />}
+                  <span className="btn btn-secondary btn-sm pointer-events-none">View</span>
+                </div>
               </Link>
             );
           })}
