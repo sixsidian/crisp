@@ -36,54 +36,43 @@ export default async function AdminUsersPage({
     ? users?.filter((u) => u.partner_organisation_id === orgFilter)
     : users;
 
-  const fieldClass =
-    "rounded-lg border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-accent focus:outline-none";
-
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">Users</h1>
-        <Link
-          href="/admin/organisations"
-          className="text-sm text-muted transition-colors hover:text-foreground"
-        >
+    <main className="page-shell">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="page-title">Users</h1>
+        <Link href="/admin/organisations" className="btn btn-ghost btn-sm">
           ← Organisations
         </Link>
       </div>
 
-      <section className="mb-10 rounded-2xl border border-border bg-surface p-5">
-        <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">New user</h2>
+      <section className="panel mb-10">
+        <h2 className="section-label mb-3">New user</h2>
         <CreateUserForm organisations={orgs ?? []} />
       </section>
 
       <section>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm uppercase tracking-wide text-muted">
-            Users ({filteredUsers?.length ?? 0})
-          </h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 className="section-label">Users ({filteredUsers?.length ?? 0})</h2>
           <OrgFilter organisations={orgs ?? []} currentOrgId={orgFilter ?? ""} />
         </div>
-        <ul className="flex flex-col gap-3 text-sm">
+        <div className="row-list">
           {filteredUsers?.map((u) => (
-            <li
-              key={u.id}
-              className="flex flex-col gap-3 rounded-xl border border-border bg-surface px-4 py-3 text-foreground sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <div className="font-medium">{u.full_name ?? "(no name set)"}</div>
-                <div className="text-xs text-muted">{emailById.get(u.id)}</div>
-                <div className="mt-1 text-xs text-muted">
+            <div key={u.id} className="row-item">
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-foreground">{u.full_name ?? "(no name set)"}</p>
+                <p className="truncate text-xs text-muted">{emailById.get(u.id)}</p>
+                <p className="mt-0.5 text-xs text-muted">
                   {u.role}
                   {u.must_change_password && " · password change pending"}
-                </div>
+                </p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <form action={reassignUser} className="flex items-center gap-2">
                   <input type="hidden" name="user_id" value={u.id} />
                   <select
                     name="partner_organisation_id"
                     defaultValue={u.partner_organisation_id ?? ""}
-                    className={fieldClass}
+                    className="field w-auto py-1.5 text-sm"
                   >
                     <option value="" disabled>
                       No organisation
@@ -94,10 +83,7 @@ export default async function AdminUsersPage({
                       </option>
                     ))}
                   </select>
-                  <button
-                    type="submit"
-                    className="rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent hover:text-foreground"
-                  >
+                  <button type="submit" className="btn btn-secondary btn-sm">
                     {u.partner_organisation_id ? "Reassign" : "Assign"}
                   </button>
                 </form>
@@ -106,14 +92,12 @@ export default async function AdminUsersPage({
                   <DeleteUserButton />
                 </form>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
-        {!filteredUsers?.length && (
-          <p className="rounded-2xl border border-border bg-surface px-4 py-6 text-sm text-muted">
-            No users match this filter.
-          </p>
-        )}
+          {!filteredUsers?.length && (
+            <div className="row-item text-sm text-muted">No users match this filter.</div>
+          )}
+        </div>
       </section>
     </main>
   );

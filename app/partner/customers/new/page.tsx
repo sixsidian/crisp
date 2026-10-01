@@ -64,7 +64,7 @@ async function createCustomer(formData: FormData) {
 
 export default function NewCustomerPage() {
   return (
-    <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+    <main className="page-shell page-shell-wide">
       <AssessmentPageHeader title="New customer" />
       <AssessmentForm action={createCustomer} submitLabel="Save and continue" companyNameField />
     </main>

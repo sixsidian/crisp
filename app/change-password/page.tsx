@@ -86,13 +86,10 @@ export default function ChangePasswordPage() {
 
   if (!checked) return null;
 
-  const fieldClass =
-    "rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-accent focus:outline-none";
-
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-8">
-        <h1 className="font-display text-xl text-foreground">Set a new password</h1>
+      <div className="panel w-full max-w-sm">
+        <h1 className="font-display text-xl font-semibold text-foreground">Set a new password</h1>
         <p className="mt-1 text-sm text-muted">
           You&apos;re signed in with a temporary password. Choose your own before continuing.
         </p>
@@ -102,7 +99,7 @@ export default function ChangePasswordPage() {
             required
             minLength={6}
             placeholder="New password"
-            className={fieldClass}
+            className="field"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
@@ -111,16 +108,12 @@ export default function ChangePasswordPage() {
             required
             minLength={6}
             placeholder="Confirm new password"
-            className={fieldClass}
+            className="field"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
           />
-          {error && <p className="text-sm text-accent">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
-          >
+          {error && <p className="text-error text-sm">{error}</p>}
+          <button type="submit" disabled={loading} className="btn btn-primary mt-2">
             {loading ? "Saving..." : "Set password"}
           </button>
         </form>

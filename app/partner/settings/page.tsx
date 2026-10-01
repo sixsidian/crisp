@@ -88,18 +88,12 @@ export default function SettingsPage() {
     setPasswordStatus("Password updated.");
   }
 
-  const fieldClass =
-    "rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-accent focus:outline-none";
-
   return (
-    <main className="mx-auto max-w-lg px-4 py-10 sm:px-6">
-      <h1 className="mb-6 font-display text-2xl text-foreground">Account settings</h1>
+    <main className="page-shell">
+      <h1 className="page-title mb-6">Account settings</h1>
 
-      <form
-        onSubmit={handleNameSubmit}
-        className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6"
-      >
-        <h2 className="font-display text-lg text-foreground">Name</h2>
+      <form onSubmit={handleNameSubmit} className="panel mb-6 flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-foreground">Name</h2>
         <p className="text-xs text-muted">Shown to colleagues at your organisation on shared customer records.</p>
         <input
           type="text"
@@ -107,46 +101,32 @@ export default function SettingsPage() {
           placeholder="Full name"
           value={fullName}
           onChange={(e) => setFullName(e.target.value)}
-          className={fieldClass}
+          className="field"
         />
-        {nameStatus && <p className="text-sm text-accent">{nameStatus}</p>}
-        <button
-          type="submit"
-          disabled={nameLoading}
-          className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
-        >
+        {nameStatus && <p className="text-sm text-muted">{nameStatus}</p>}
+        <button type="submit" disabled={nameLoading} className="btn btn-primary mt-1 self-start">
           {nameLoading ? "Saving..." : "Update name"}
         </button>
       </form>
 
-      <form
-        onSubmit={handleEmailSubmit}
-        className="mb-6 flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6"
-      >
-        <h2 className="font-display text-lg text-foreground">Email</h2>
+      <form onSubmit={handleEmailSubmit} className="panel mb-6 flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-foreground">Email</h2>
         {currentEmail && <p className="text-xs text-muted">Current: {currentEmail}</p>}
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className={fieldClass}
+          className="field"
         />
-        {emailStatus && <p className="text-sm text-accent">{emailStatus}</p>}
-        <button
-          type="submit"
-          disabled={emailLoading}
-          className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
-        >
+        {emailStatus && <p className="text-sm text-muted">{emailStatus}</p>}
+        <button type="submit" disabled={emailLoading} className="btn btn-primary mt-1 self-start">
           {emailLoading ? "Saving..." : "Update email"}
         </button>
       </form>
 
-      <form
-        onSubmit={handlePasswordSubmit}
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-6"
-      >
-        <h2 className="font-display text-lg text-foreground">Password</h2>
+      <form onSubmit={handlePasswordSubmit} className="panel flex flex-col gap-3">
+        <h2 className="font-display text-lg font-semibold text-foreground">Password</h2>
         <input
           type="password"
           required
@@ -154,14 +134,10 @@ export default function SettingsPage() {
           placeholder="New password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className={fieldClass}
+          className="field"
         />
-        {passwordStatus && <p className="text-sm text-accent">{passwordStatus}</p>}
-        <button
-          type="submit"
-          disabled={passwordLoading}
-          className="mt-1 self-start rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
-        >
+        {passwordStatus && <p className="text-sm text-muted">{passwordStatus}</p>}
+        <button type="submit" disabled={passwordLoading} className="btn btn-primary mt-1 self-start">
           {passwordLoading ? "Saving..." : "Update password"}
         </button>
       </form>

@@ -12,10 +12,10 @@ export default async function AdminOrganisationsPage() {
     .order("name");
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">Partner organisations</h1>
-        <Link href="/admin/users" className="text-sm text-muted transition-colors hover:text-foreground">
+    <main className="page-shell">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="page-title">Partner organisations</h1>
+        <Link href="/admin/users" className="btn btn-ghost btn-sm">
           Users →
         </Link>
       </div>
@@ -26,42 +26,27 @@ export default async function AdminOrganisationsPage() {
           name="name"
           required
           placeholder="Organisation name (e.g. Softcat)"
-          className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
+          className="field"
         />
-        <button
-          type="submit"
-          className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
-        >
+        <button type="submit" className="btn btn-primary shrink-0">
           Add organisation
         </button>
       </form>
 
-      <ul className="flex flex-col gap-2 text-sm">
+      <div className="row-list">
         {orgs?.map((org) => (
-          <li
-            key={org.id}
-            className="flex items-center gap-2 rounded-xl border border-border bg-surface px-4 py-2.5"
-          >
+          <div key={org.id} className="row-item">
             <form action={renameOrganisation} className="flex flex-1 items-center gap-2">
               <input type="hidden" name="id" value={org.id} />
-              <input
-                type="text"
-                name="name"
-                defaultValue={org.name}
-                required
-                className="flex-1 rounded-lg border border-border bg-background px-2 py-1 text-foreground focus:border-accent focus:outline-none"
-              />
-              <button
-                type="submit"
-                className="rounded-full border border-border px-3 py-1 text-xs text-muted transition-colors hover:border-accent hover:text-foreground"
-              >
+              <input type="text" name="name" defaultValue={org.name} required className="field" />
+              <button type="submit" className="btn btn-secondary btn-sm shrink-0">
                 Save
               </button>
             </form>
-          </li>
+          </div>
         ))}
-      </ul>
-      {!orgs?.length && <p className="text-sm text-muted">No organisations yet.</p>}
+        {!orgs?.length && <div className="row-item text-sm text-muted">No organisations yet.</div>}
+      </div>
     </main>
   );
 }

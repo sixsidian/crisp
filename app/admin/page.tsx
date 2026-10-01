@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createServiceRoleClient } from "@/lib/supabase/server";
+import { StatusBadge } from "@/components/status-badge";
 
 // This page reads live data behind auth - never statically prerender it.
 export const dynamic = "force-dynamic";
@@ -25,47 +26,45 @@ export default async function AdminDashboard() {
     .limit(50);
 
   return (
-    <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-display text-2xl text-foreground">Admin</h1>
+    <main className="page-shell page-shell-wide">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h1 className="page-title">Admin</h1>
         <div className="flex gap-4 text-sm">
-          <Link href="/admin/organisations" className="text-muted transition-colors hover:text-foreground">
+          <Link href="/admin/organisations" className="btn btn-ghost btn-sm">
             Organisations
           </Link>
-          <Link href="/admin/users" className="text-muted transition-colors hover:text-foreground">
+          <Link href="/admin/users" className="btn btn-ghost btn-sm">
             Users
           </Link>
         </div>
       </div>
 
       <section className="mb-8">
-        <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">
-          Partners ({partners?.length ?? 0})
-        </h2>
-        <ul className="flex flex-col gap-2 text-sm">
+        <h2 className="section-label mb-3">Partners ({partners?.length ?? 0})</h2>
+        <div className="row-list">
           {partners?.map((p) => (
-            <li
-              key={p.id}
-              className="rounded-xl border border-border bg-surface px-4 py-2.5 text-foreground"
-            >
-              {p.full_name ?? p.id} — {p.partner_organisations?.[0]?.name ?? "no organisation set"}
-            </li>
+            <div key={p.id} className="row-item">
+              <span className="text-foreground">{p.full_name ?? p.id}</span>
+              <span className="text-sm text-muted">
+                {p.partner_organisations?.[0]?.name ?? "no organisation set"}
+              </span>
+            </div>
           ))}
-        </ul>
+          {!partners?.length && <div className="row-item text-sm text-muted">No partners yet.</div>}
+        </div>
       </section>
 
       <section>
-        <h2 className="mb-3 text-sm uppercase tracking-wide text-muted">Recent submissions</h2>
-        <ul className="flex flex-col gap-2 text-sm">
+        <h2 className="section-label mb-3">Recent submissions</h2>
+        <div className="row-list">
           {submissions?.map((s) => (
-            <li
-              key={s.id}
-              className="rounded-xl border border-border bg-surface px-4 py-2.5 text-foreground"
-            >
-              {s.customers?.[0]?.company_name ?? "unknown customer"} — {s.status}
-            </li>
+            <div key={s.id} className="row-item">
+              <span className="text-foreground">{s.customers?.[0]?.company_name ?? "unknown customer"}</span>
+              <StatusBadge status={s.status} />
+            </div>
           ))}
-        </ul>
+          {!submissions?.length && <div className="row-item text-sm text-muted">No submissions yet.</div>}
+        </div>
       </section>
     </main>
   );

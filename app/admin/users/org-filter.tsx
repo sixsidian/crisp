@@ -18,7 +18,7 @@ export function OrgFilter({
         const value = e.target.value;
         router.push(value ? `/admin/users?org=${value}` : "/admin/users");
       }}
-      className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none"
+      className="field w-auto py-1.5 text-sm"
     >
       <option value="">All organisations</option>
       {organisations.map((org) => (

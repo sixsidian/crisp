@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { SignOutButton } from "./sign-out-button";
+import { AccountMenu } from "./account-menu";
 import Link from "next/link";
 
 export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
@@ -8,13 +8,13 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // The organization (e.g. "Commvault") the signed-in user belongs to -
-  // shown top-right in place of their email. Two plain queries instead
-  // of a PostgREST relationship embed (profiles -> partner_organisations)
-  // - an embed depends on PostgREST's schema cache having picked up the
-  // partner_organisation_id foreign key, which can lag behind a migration run
-  // straight through the SQL editor rather than Supabase's own
-  // migration tooling.
+  // The organisation (e.g. "Commvault") the signed-in user belongs to -
+  // shown in the account menu in place of their email. Two plain queries
+  // instead of a PostgREST relationship embed (profiles -> partner_
+  // organisations) - an embed depends on PostgREST's schema cache having
+  // picked up the partner_organisation_id foreign key, which can lag
+  // behind a migration run straight through the SQL editor rather than
+  // Supabase's own migration tooling.
   let orgName: string | null = null;
   let isAdmin = false;
   if (user) {
@@ -38,45 +38,27 @@ export async function AppHeader({ variant }: { variant: "partner" | "admin" }) {
 
   const homeHref = variant === "admin" ? "/admin" : "/partner";
 
+  const menuLinks = [
+    ...(isAdmin ? [{ href: "/admin", label: "Admin" }] : []),
+    { href: "/partner/settings", label: "Settings" },
+  ];
+
   return (
-    <header className="border-b border-border">
-      <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4 sm:px-6">
-        <div className="flex items-center gap-4">
-          <Link
-            href={homeHref}
-            className="flex items-center gap-2"
-            title="Cyber Resilience Intelligence & Scoring Platform"
-          >
-            <span className="font-display text-base leading-tight text-foreground sm:text-lg">
+    <header className="sticky top-0 z-10 border-b border-border bg-surface">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <Link href={homeHref} className="flex shrink-0 items-center gap-2">
+            <span className="font-display text-base font-semibold tracking-tight text-foreground">
               C.R.I.S.P
             </span>
-            {variant === "admin" && (
-              <span className="rounded-full border border-border px-2 py-0.5 text-xs uppercase tracking-wide text-muted">
-                Admin
-              </span>
-            )}
+            {variant === "admin" && <span className="chip">Admin</span>}
           </Link>
-          <Link href={homeHref} className="text-sm text-muted transition-colors hover:text-foreground">
+          <Link href={homeHref} className="btn btn-ghost btn-sm shrink-0">
             Home
           </Link>
         </div>
-        <div className="flex items-center gap-4">
-          {user && (
-            <span className="hidden text-sm text-muted lg:inline">{orgName ?? user.email}</span>
-          )}
-          {isAdmin && (
-            <Link href="/admin" className="text-sm text-muted transition-colors hover:text-foreground">
-              Admin
-            </Link>
-          )}
-          <Link
-            href="/partner/settings"
-            className="text-sm text-muted transition-colors hover:text-foreground"
-          >
-            Settings
-          </Link>
-          <SignOutButton />
-        </div>
+
+        {user && <AccountMenu label={orgName ?? user.email ?? "Account"} links={menuLinks} />}
       </div>
     </header>
   );

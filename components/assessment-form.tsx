@@ -3,8 +3,7 @@
 import { useMemo, useState } from "react";
 import { ASSESSMENT_SECTIONS, AssessmentField, getQuestionNumbers, isFieldVisible } from "@/lib/assessment-questions";
 
-const fieldClass =
-  "rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:border-accent focus:outline-none";
+const fieldClass = "field";
 
 type Values = Record<string, string | string[]>;
 
@@ -116,13 +115,13 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
 
   return (
     <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
-      <nav className="flex gap-2 overflow-x-auto pb-2 lg:sticky lg:top-6 lg:w-64 lg:shrink-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+      <nav className="flex gap-2 overflow-x-auto pb-2 lg:sticky lg:top-20 lg:w-60 lg:shrink-0 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
         <div className="mb-2 hidden lg:block">
-          <p className="mb-1 text-xs uppercase tracking-wide text-muted">Progress</p>
-          <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface">
+          <p className="section-label mb-1">Progress</p>
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-background">
             <div className="h-full bg-accent transition-all" style={{ width: `${overallProgress}%` }} />
           </div>
-          <p className="mt-1 text-xs text-muted">{overallProgress}% complete</p>
+          <p className="data-value mt-1 text-xs text-muted">{overallProgress}% complete</p>
         </div>
         {steps.map((step, index) => {
           const progress = stepProgress(step);
@@ -131,7 +130,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
               key={step.id}
               type="button"
               onClick={() => goToStep(index)}
-              className={`flex shrink-0 items-center justify-between gap-2 rounded-full border px-3 py-1.5 text-left text-sm transition-colors lg:rounded-lg ${
+              className={`flex shrink-0 items-center justify-between gap-2 rounded-[var(--radius-sm)] border px-3 py-1.5 text-left text-sm transition-colors ${
                 activeIndex === index
                   ? "border-accent bg-surface text-foreground"
                   : "border-border text-muted hover:text-foreground"
@@ -139,7 +138,7 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
             >
               <span>{step.title}</span>
               {progress.total > 0 && (
-                <span className="text-xs text-muted">
+                <span className="data-value text-xs text-muted">
                   {progress.answered}/{progress.total}
                 </span>
               )}
@@ -149,8 +148,8 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
       </nav>
 
       <form action={action} onSubmit={handleSubmit} className="min-w-0 flex-1">
-        <div className="rounded-2xl border border-border bg-surface p-6">
-          <h2 className="font-display text-lg text-foreground">{activeStep.title}</h2>
+        <div className="panel">
+          <h2 className="font-display text-lg font-semibold text-foreground">{activeStep.title}</h2>
           {activeStep.description && <p className="mt-1 text-xs text-muted">{activeStep.description}</p>}
           <div className="mt-4 flex flex-col gap-4">
             {visibleFields(activeStep).map((field) => (
@@ -202,14 +201,14 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
           })
           .map((input) => <input key={input.key} type="hidden" name={input.name} value={input.value} />)}
 
-        {submitError && <p className="mt-4 text-sm text-accent">{submitError}</p>}
+        {submitError && <p className="text-error mt-4 text-sm">{submitError}</p>}
 
         <div className="mt-6 flex items-center justify-between">
           <button
             type="button"
             onClick={() => goToStep(Math.max(0, activeIndex - 1))}
             disabled={activeIndex === 0}
-            className="rounded-full border border-border px-4 py-2 text-sm text-muted transition-colors hover:text-foreground disabled:opacity-40"
+            className="btn btn-ghost"
           >
             Back
           </button>
@@ -229,15 +228,12 @@ export function AssessmentForm({ action, existingData, submitLabel, companyNameF
                 }
                 goToStep(Math.min(steps.length - 1, activeIndex + 1));
               }}
-              className="rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
+              className="btn btn-primary"
             >
               Next
             </button>
           ) : (
-            <button
-              type="submit"
-              className="rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover"
-            >
+            <button type="submit" className="btn btn-primary">
               {submitLabel}
             </button>
           )}
@@ -276,7 +272,7 @@ function Field({
         value={typeof noteValue === "string" ? noteValue : ""}
         onChange={(e) => onChange(`${field.name}__note`, e.target.value)}
         rows={2}
-        className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground focus:border-accent focus:outline-none"
+        className="field text-sm"
       />
     </label>
   );

@@ -30,8 +30,8 @@ export default function LoginPage() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-border bg-surface p-8">
-        <h1 className="font-display text-xl text-foreground">
+      <div className="panel w-full max-w-sm">
+        <h1 className="font-display text-xl font-semibold text-foreground">
           Cyber Resilience Intelligence &amp; Scoring Platform
         </h1>
         <p className="mt-1 text-sm text-muted">Sign in to your partner account.</p>
@@ -40,7 +40,7 @@ export default function LoginPage() {
             type="email"
             required
             placeholder="Email"
-            className="rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
+            className="field"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
           />
@@ -48,16 +48,12 @@ export default function LoginPage() {
             type="password"
             required
             placeholder="Password"
-            className="rounded-lg border border-border bg-background px-3 py-2 text-foreground placeholder:text-muted focus:border-accent focus:outline-none"
+            className="field"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
-          {error && <p className="text-sm text-accent">{error}</p>}
-          <button
-            type="submit"
-            disabled={loading}
-            className="mt-2 rounded-full bg-accent px-4 py-2 font-medium text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
-          >
+          {error && <p className="text-error text-sm">{error}</p>}
+          <button type="submit" disabled={loading} className="btn btn-primary mt-2">
             {loading ? "Signing in..." : "Sign in"}
           </button>
         </form>

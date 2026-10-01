@@ -9,7 +9,7 @@ export function DeleteUserButton() {
           e.preventDefault();
         }
       }}
-      className="rounded-full border border-border px-3 py-1.5 text-xs text-muted transition-colors hover:border-accent hover:text-foreground"
+      className="btn btn-danger-ghost btn-sm"
     >
       Delete
     </button>

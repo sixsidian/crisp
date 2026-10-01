@@ -27,14 +27,10 @@ export function GenerateReportButton({ submissionId }: { submissionId: string })
 
   return (
     <div className="flex flex-col items-end gap-1">
-      <button
-        onClick={handleClick}
-        disabled={loading}
-        className="rounded-full bg-accent px-3 py-1.5 text-sm font-medium text-accent-foreground transition-colors hover:bg-accent-hover disabled:opacity-50"
-      >
+      <button onClick={handleClick} disabled={loading} className="btn btn-primary btn-sm">
         {loading ? "Generating..." : "Generate report"}
       </button>
-      {error && <p className="text-xs text-accent">{error}</p>}
+      {error && <p className="text-error text-xs">{error}</p>}
     </div>
   );
 }

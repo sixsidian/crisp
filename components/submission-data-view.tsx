@@ -25,7 +25,7 @@ export function SubmissionDataView({ data }: { data: Record<string, unknown> }) 
         if (!entries.length) return null;
         return (
           <div key={section.id}>
-            <h3 className="mb-2 text-xs uppercase tracking-wide text-muted">{section.title}</h3>
+            <h3 className="section-label mb-2">{section.title}</h3>
             <dl className="grid grid-cols-1 gap-x-6 gap-y-2 sm:grid-cols-2">
               {entries.map((field) => {
                 const note = data[`${field.name}__note`];
